@@ -587,12 +587,23 @@ public class ExecutorManager extends EventHandler implements
   }
 
   @Override
+  public Integer getExecutableFlowsCount(int skip, int size) throws ExecutorManagerException {
+    return  this.executorLoader.fetchFlowHistoryCount(skip, size);
+  }
+
+  @Override
   public List<ExecutableFlow> getExecutableFlows(final String flowIdContains,
       final int skip, final int size) throws ExecutorManagerException {
     final List<ExecutableFlow> flows =
         this.executorLoader.fetchFlowHistory(null, '%' + flowIdContains + '%', null,
             0, -1, -1, skip, size);
     return flows;
+  }
+
+  @Override
+  public Integer getExecutableFlowsCount(String flowIdContains, int skip, int size) throws ExecutorManagerException {
+    return this.executorLoader.fetchFlowHistoryCount(null, '%' + flowIdContains + '%', null,
+            0, -1, -1, skip, size);
   }
 
   @Override
@@ -604,6 +615,12 @@ public class ExecutorManager extends EventHandler implements
         this.executorLoader.fetchFlowHistory(projContain, flowContain, userContain,
             status, begin, end, skip, size);
     return flows;
+  }
+
+  @Override
+  public Integer getExecutableFlowsCount(String projContain, String flowContain, String userContain, int status, long begin, long end, int skip, int size) throws ExecutorManagerException {
+    return this.executorLoader.fetchFlowHistoryCount(projContain, flowContain, userContain,
+            status, begin, end, skip, size);
   }
 
   @Override
@@ -1064,6 +1081,12 @@ public class ExecutorManager extends EventHandler implements
       final int from, final int length, final Status status) throws ExecutorManagerException {
     return this.executorLoader.fetchFlowHistory(projectId, flowId, from, length,
         status);
+  }
+
+  @Override
+  public Integer getExecutableFlowsCount(int projectId, String flowId, int from, int length, Status status) throws ExecutorManagerException {
+    return this.executorLoader.fetchFlowHistoryCount(projectId, flowId, from, length,
+            status);
   }
 
   /**

@@ -88,21 +88,40 @@ public class ExecutionFlowDao {
   }
 
   List<ExecutableFlow> fetchFlowHistory(final int skip, final int num)
-      throws ExecutorManagerException {
+          throws ExecutorManagerException {
     try {
       return this.dbOperator.query(FetchExecutableFlows.FETCH_ALL_EXECUTABLE_FLOW_HISTORY,
-          new FetchExecutableFlows(), skip, num);
+              new FetchExecutableFlows(), skip, num);
+    } catch (final SQLException e) {
+      throw new ExecutorManagerException("Error fetching flow History", e);
+    }
+  }
+  Integer fetchFlowHistoryCount(final int skip, final int num)
+          throws ExecutorManagerException {
+    try {
+      return this.dbOperator.query(FetchExecutableFlowsCount.FETCH_ALL_EXECUTABLE_FLOW_HISTORY,
+              new FetchExecutableFlowsCount(), skip, num);
     } catch (final SQLException e) {
       throw new ExecutorManagerException("Error fetching flow History", e);
     }
   }
 
   List<ExecutableFlow> fetchFlowHistory(final int projectId, final String flowId,
-      final int skip, final int num)
-      throws ExecutorManagerException {
+                                        final int skip, final int num)
+          throws ExecutorManagerException {
     try {
       return this.dbOperator.query(FetchExecutableFlows.FETCH_EXECUTABLE_FLOW_HISTORY,
-          new FetchExecutableFlows(), projectId, flowId, skip, num);
+              new FetchExecutableFlows(), projectId, flowId, skip, num);
+    } catch (final SQLException e) {
+      throw new ExecutorManagerException("Error fetching flow history", e);
+    }
+  }
+  Integer fetchFlowHistoryCount(final int projectId, final String flowId,
+                                        final int skip, final int num)
+          throws ExecutorManagerException {
+    try {
+      return this.dbOperator.query(FetchExecutableFlowsCount.FETCH_EXECUTABLE_FLOW_HISTORY,
+              new FetchExecutableFlowsCount(), projectId, flowId, skip, num);
     } catch (final SQLException e) {
       throw new ExecutorManagerException("Error fetching flow history", e);
     }
@@ -135,11 +154,21 @@ public class ExecutionFlowDao {
   }
 
   List<ExecutableFlow> fetchFlowHistory(final int projectId, final String flowId,
-      final int skip, final int num, final Status status)
-      throws ExecutorManagerException {
+                                        final int skip, final int num, final Status status)
+          throws ExecutorManagerException {
     try {
       return this.dbOperator.query(FetchExecutableFlows.FETCH_EXECUTABLE_FLOW_BY_STATUS,
-          new FetchExecutableFlows(), projectId, flowId, status.getNumVal(), skip, num);
+              new FetchExecutableFlows(), projectId, flowId, status.getNumVal(), skip, num);
+    } catch (final SQLException e) {
+      throw new ExecutorManagerException("Error fetching active flows", e);
+    }
+  }
+  Integer fetchFlowHistoryCount(final int projectId, final String flowId,
+                                        final int skip, final int num, final Status status)
+          throws ExecutorManagerException {
+    try {
+      return this.dbOperator.query(FetchExecutableFlowsCount.FETCH_EXECUTABLE_FLOW_BY_STATUS,
+              new FetchExecutableFlowsCount(), projectId, flowId, status.getNumVal(), skip, num);
     } catch (final SQLException e) {
       throw new ExecutorManagerException("Error fetching active flows", e);
     }
@@ -158,10 +187,10 @@ public class ExecutionFlowDao {
   }
 
   List<ExecutableFlow> fetchFlowHistory(final String projContain, final String flowContains,
-      final String userNameContains, final int status,
-      final long startTime, final long endTime,
-      final int skip, final int num)
-      throws ExecutorManagerException {
+                                        final String userNameContains, final int status,
+                                        final long startTime, final long endTime,
+                                        final int skip, final int num)
+          throws ExecutorManagerException {
     String query = FetchExecutableFlows.FETCH_BASE_EXECUTABLE_FLOW_QUERY;
     final List<Object> params = new ArrayList<>();
 
@@ -236,6 +265,90 @@ public class ExecutionFlowDao {
 
     try {
       return this.dbOperator.query(query, new FetchExecutableFlows(), params.toArray());
+    } catch (final SQLException e) {
+      throw new ExecutorManagerException("Error fetching active flows", e);
+    }
+  }
+
+  Integer fetchFlowHistoryCount(final String projContain, final String flowContains,
+                                        final String userNameContains, final int status,
+                                        final long startTime, final long endTime,
+                                        final int skip, final int num)
+          throws ExecutorManagerException {
+    String query = FetchExecutableFlowsCount.FETCH_BASE_EXECUTABLE_FLOW_QUERY;
+    final List<Object> params = new ArrayList<>();
+
+    boolean first = true;
+    if (projContain != null && !projContain.isEmpty()) {
+      query += " JOIN projects p ON ef.project_id = p.id WHERE name LIKE ?";
+      params.add('%' + projContain + '%');
+      first = false;
+    }
+
+    // todo kunkun-tang: we don't need the below complicated logics. We should just use a simple way.
+    if (flowContains != null && !flowContains.isEmpty()) {
+      if (first) {
+        query += " WHERE ";
+        first = false;
+      } else {
+        query += " AND ";
+      }
+
+      query += " flow_id LIKE ?";
+      params.add('%' + flowContains + '%');
+    }
+
+    if (userNameContains != null && !userNameContains.isEmpty()) {
+      if (first) {
+        query += " WHERE ";
+        first = false;
+      } else {
+        query += " AND ";
+      }
+      query += " submit_user LIKE ?";
+      params.add('%' + userNameContains + '%');
+    }
+
+    if (status != 0) {
+      if (first) {
+        query += " WHERE ";
+        first = false;
+      } else {
+        query += " AND ";
+      }
+      query += " status = ?";
+      params.add(status);
+    }
+
+    if (startTime > 0) {
+      if (first) {
+        query += " WHERE ";
+        first = false;
+      } else {
+        query += " AND ";
+      }
+      query += " start_time > ?";
+      params.add(startTime);
+    }
+
+    if (endTime > 0) {
+      if (first) {
+        query += " WHERE ";
+      } else {
+        query += " AND ";
+      }
+      query += " end_time < ?";
+      params.add(endTime);
+    }
+
+    if (skip > -1 && num > 0) {
+      query += "  ORDER BY exec_id DESC LIMIT ?, ?";
+      params.add(skip);
+      params.add(num);
+    }
+
+    try {
+      return this.dbOperator.query(query, new FetchExecutableFlowsCount(), params.toArray());
     } catch (final SQLException e) {
       throw new ExecutorManagerException("Error fetching active flows", e);
     }
@@ -367,27 +480,27 @@ public class ExecutionFlowDao {
   }
 
   public static class FetchExecutableFlows implements
-      ResultSetHandler<List<ExecutableFlow>> {
+          ResultSetHandler<List<ExecutableFlow>> {
 
     static String FETCH_EXECUTABLE_FLOW_BY_START_TIME =
-        "SELECT ef.exec_id, ef.enc_type, ef.flow_data FROM execution_flows ef WHERE project_id=? "
-            + "AND flow_id=? AND start_time >= ? ORDER BY start_time DESC";
+            "SELECT ef.exec_id, ef.enc_type, ef.flow_data FROM execution_flows ef WHERE project_id=? "
+                    + "AND flow_id=? AND start_time >= ? ORDER BY start_time DESC";
     static String FETCH_BASE_EXECUTABLE_FLOW_QUERY =
-        "SELECT ef.exec_id, ef.enc_type, ef.flow_data FROM execution_flows ef";
+            "SELECT ef.exec_id, ef.enc_type, ef.flow_data FROM execution_flows ef";
     static String FETCH_EXECUTABLE_FLOW =
-        "SELECT exec_id, enc_type, flow_data FROM execution_flows "
-            + "WHERE exec_id=?";
+            "SELECT exec_id, enc_type, flow_data FROM execution_flows "
+                    + "WHERE exec_id=?";
     static String FETCH_ALL_EXECUTABLE_FLOW_HISTORY =
-        "SELECT exec_id, enc_type, flow_data FROM execution_flows "
-            + "ORDER BY exec_id DESC LIMIT ?, ?";
+            "SELECT exec_id, enc_type, flow_data FROM execution_flows "
+                    + "ORDER BY exec_id DESC LIMIT ?, ?";
     static String FETCH_EXECUTABLE_FLOW_HISTORY =
-        "SELECT exec_id, enc_type, flow_data FROM execution_flows "
-            + "WHERE project_id=? AND flow_id=? "
-            + "ORDER BY exec_id DESC LIMIT ?, ?";
+            "SELECT exec_id, enc_type, flow_data FROM execution_flows "
+                    + "WHERE project_id=? AND flow_id=? "
+                    + "ORDER BY exec_id DESC LIMIT ?, ?";
     static String FETCH_EXECUTABLE_FLOW_BY_STATUS =
-        "SELECT exec_id, enc_type, flow_data FROM execution_flows "
-            + "WHERE project_id=? AND flow_id=? AND status=? "
-            + "ORDER BY exec_id DESC LIMIT ?, ?";
+            "SELECT exec_id, enc_type, flow_data FROM execution_flows "
+                    + "WHERE project_id=? AND flow_id=? AND status=? "
+                    + "ORDER BY exec_id DESC LIMIT ?, ?";
 
     @Override
     public List<ExecutableFlow> handle(final ResultSet rs) throws SQLException {
@@ -405,8 +518,8 @@ public class ExecutionFlowDao {
           final EncodingType encType = EncodingType.fromInteger(encodingType);
           try {
             final ExecutableFlow exFlow =
-                ExecutableFlow.createExecutableFlowFromObject(
-                    GZIPUtils.transformBytesToObject(data, encType));
+                    ExecutableFlow.createExecutableFlowFromObject(
+                            GZIPUtils.transformBytesToObject(data, encType));
             execFlows.add(exFlow);
           } catch (final IOException e) {
             throw new SQLException("Error retrieving flow data " + id, e);
@@ -415,6 +528,39 @@ public class ExecutionFlowDao {
       } while (rs.next());
 
       return execFlows;
+    }
+  }
+  public static class FetchExecutableFlowsCount implements
+          ResultSetHandler<Integer> {
+
+    static String FETCH_EXECUTABLE_FLOW_BY_START_TIME =
+            "SELECT count(1) FROM execution_flows ef WHERE project_id=? "
+                    + "AND flow_id=? AND start_time >= ? ORDER BY start_time DESC";
+    static String FETCH_BASE_EXECUTABLE_FLOW_QUERY =
+            "SELECT count(1) FROM execution_flows ef";
+    static String FETCH_EXECUTABLE_FLOW =
+            "SELECT count(1) FROM execution_flows "
+                    + "WHERE exec_id=?";
+    static String FETCH_ALL_EXECUTABLE_FLOW_HISTORY =
+            "SELECT count(1) FROM execution_flows "
+                    + "ORDER BY exec_id DESC LIMIT ?, ?";
+    static String FETCH_EXECUTABLE_FLOW_HISTORY =
+            "SELECT count(1) FROM execution_flows "
+                    + "WHERE project_id=? AND flow_id=? "
+                    + "ORDER BY exec_id DESC LIMIT ?, ?";
+    static String FETCH_EXECUTABLE_FLOW_BY_STATUS =
+            "SELECT count(1) FROM execution_flows "
+                    + "WHERE project_id=? AND flow_id=? AND status=? "
+
+                    + "ORDER BY exec_id DESC LIMIT ?, ?";
+
+    @Override
+    public Integer handle(final ResultSet rs) throws SQLException {
+         if(!rs.next()){
+           return 0;
+         }
+        final int count = rs.getInt(1);
+        return count;
     }
   }
 

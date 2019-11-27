@@ -167,7 +167,9 @@ public class ExecutorServlet extends LoginAbstractAzkabanServlet {
       final String projectName = getParam(req, "project");
       final String flowName = getParam(req, "flow");
       ajaxGetFlowRunning(req, resp, ret, session.getUser(), projectName,
-          flowName);
+              flowName);
+    }else if (ajaxName.equals("getAllRunning")) {
+      ajaxGetAllFlowRunning(req, resp, ret);
     } else if (ajaxName.equals("flowInfo")) {
       final String projectName = getParam(req, "project");
       final String flowName = getParam(req, "flow");
@@ -404,6 +406,58 @@ public class ExecutorServlet extends LoginAbstractAzkabanServlet {
     page.add("flowid", triggerInst.getFlowId());
 
     page.render();
+  }
+  private void ajaxGetAllFlowRunning(final HttpServletRequest req,
+                                     final HttpServletResponse resp, final HashMap<String, Object> ret) throws IOException {
+
+    final List<Pair<ExecutableFlow, Optional<Executor>>> runningFlows =
+            this.executorManagerAdapter.getActiveFlowsWithExecutor();
+    List<Object> runningList = new ArrayList<>();
+    for(Pair<ExecutableFlow, Optional<Executor>> pair: runningFlows){
+      ExecutableFlow flow = pair.getFirst();
+      int projectId = flow.getProjectId();
+      String projectName = flow.getProjectName();
+      String flowId = flow.getFlowId();
+      int execId = flow.getExecutionId();
+      long startTime = flow.getStartTime();
+      long endTime = flow.getEndTime();
+      Status status = flow.getStatus();
+      Map<String,Object> object = new HashMap<>();
+      object.put("projectId",projectId);
+      object.put("projectName",projectName);
+      object.put("flowId",flowId);
+      object.put("execId",execId);
+      object.put("startTime",startTime);
+      object.put("endTime",endTime);
+      object.put("status",status);
+      runningList.add(object);
+
+    }
+    ret.put("runningFlows", runningList.isEmpty() ? null : runningList);
+
+    final List<ExecutableFlow> finishedFlows =
+            this.executorManagerAdapter.getRecentlyFinishedFlows();
+    List<Object> finishedList = new ArrayList<>();
+    for(ExecutableFlow  flow: finishedFlows){
+      int projectId = flow.getProjectId();
+      String projectName = flow.getProjectName();
+      String flowId = flow.getFlowId();
+      int execId = flow.getExecutionId();
+      long startTime = flow.getStartTime();
+      long endTime = flow.getEndTime();
+      Status status = flow.getStatus();
+      Map<String,Object> object = new HashMap<>();
+      object.put("projectId",projectId);
+      object.put("projectName",projectName);
+      object.put("flowId",flowId);
+      object.put("execId",execId);
+      object.put("startTime",startTime);
+      object.put("endTime",endTime);
+      object.put("status",status);
+      finishedList.add(object);
+    }
+
+    ret.put("recentlyFinished", finishedList.isEmpty() ? null :finishedList );
   }
 
   private void addExternalLinkLabel(final HttpServletRequest req, final Page page) {

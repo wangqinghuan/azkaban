@@ -308,4 +308,10 @@ public interface ExecutorLoader {
       throws ExecutorManagerException;
 
   void updateExecutableRamp(ExecutableRamp executableRamp) throws ExecutorManagerException;
+
+  Integer fetchFlowHistoryCount(int projectId, String flowId, int from, int length, Status status) throws ExecutorManagerException;
+
+  Integer fetchFlowHistoryCount(String projContain, String flowContain, String userContain, int status, long begin, long end, int skip, int size) throws ExecutorManagerException;
+
+  Integer fetchFlowHistoryCount(int skip, int size) throws ExecutorManagerException;
 }

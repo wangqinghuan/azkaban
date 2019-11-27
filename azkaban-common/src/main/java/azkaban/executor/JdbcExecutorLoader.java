@@ -396,6 +396,21 @@ public class JdbcExecutorLoader implements ExecutorLoader {
   }
 
   @Override
+  public Integer fetchFlowHistoryCount(int projectId, String flowId, int from, int length, Status status) throws ExecutorManagerException {
+    return executionFlowDao.fetchFlowHistoryCount(projectId,  flowId,  from,  length,  status);
+  }
+
+  @Override
+  public Integer fetchFlowHistoryCount(String projContain, String flowContain, String userContain, int status, long begin, long end, int skip, int size) throws ExecutorManagerException {
+    return executionFlowDao.fetchFlowHistoryCount( projContain,  flowContain,  userContain,  status,  begin,  end,  skip,  size);
+  }
+
+  @Override
+  public Integer fetchFlowHistoryCount(int skip, int size) throws ExecutorManagerException {
+    return executionFlowDao.fetchFlowHistoryCount(skip,size);
+  }
+
+  @Override
   public void unsetExecutorIdForExecution(final int executionId) throws ExecutorManagerException {
     this.executionFlowDao.unsetExecutorIdForExecution(executionId);
   }

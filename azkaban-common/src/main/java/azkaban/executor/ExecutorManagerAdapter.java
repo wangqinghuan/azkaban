@@ -54,21 +54,31 @@ public interface ExecutorManagerAdapter {
   public List<ExecutableFlow> getRecentlyFinishedFlows();
 
   public List<ExecutableFlow> getExecutableFlows(int skip, int size)
-      throws ExecutorManagerException;
+          throws ExecutorManagerException;
+  public Integer getExecutableFlowsCount(int skip, int size)
+          throws ExecutorManagerException;
 
   public List<ExecutableFlow> getExecutableFlows(String flowIdContains,
       int skip, int size) throws ExecutorManagerException;
 
+  public Integer getExecutableFlowsCount(String flowIdContains,
+     int skip, int size) throws ExecutorManagerException;
+
   public List<ExecutableFlow> getExecutableFlows(String projContain,
       String flowContain, String userContain, int status, long begin, long end,
       int skip, int size) throws ExecutorManagerException;
+  public Integer getExecutableFlowsCount(String projContain,
+     String flowContain, String userContain, int status, long begin, long end,
+     int skip, int size) throws ExecutorManagerException;
 
   public int getExecutableFlows(int projectId, String flowId, int from,
-      int length, List<ExecutableFlow> outputList)
-      throws ExecutorManagerException;
+                                int length, List<ExecutableFlow> outputList)
+          throws ExecutorManagerException;
 
   public List<ExecutableFlow> getExecutableFlows(int projectId, String flowId,
-      int from, int length, Status status) throws ExecutorManagerException;
+       int from, int length, Status status) throws ExecutorManagerException;
+  public Integer getExecutableFlowsCount(int projectId, String flowId,
+       int from, int length, Status status) throws ExecutorManagerException;
 
   public List<ExecutableJobInfo> getExecutableJobs(Project project,
       String jobId, int skip, int size) throws ExecutorManagerException;

@@ -23,16 +23,21 @@ import azkaban.project.ProjectManager;
 import azkaban.server.session.Session;
 import azkaban.webapp.AzkabanWebServer;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.joda.time.format.DateTimeFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class HistoryServlet extends LoginAbstractAzkabanServlet {
 
+  private static final Logger logger = LoggerFactory.getLogger(HistoryServlet.class.getName());
   private static final String FILTER_BY_DATE_PATTERN = "MM/dd/yyyy hh:mm aa";
   private static final long serialVersionUID = 1L;
   private ExecutorManagerAdapter executorManagerAdapter;
@@ -78,7 +83,98 @@ public class HistoryServlet extends LoginAbstractAzkabanServlet {
 
   private void fetchHistoryData(final HttpServletRequest req,
       final HttpServletResponse resp, final HashMap<String, Object> ret)
-      throws ServletException {
+      throws ServletException {{
+    int pageNum = getIntParam(req, "page", 1);
+    final int pageSize = getIntParam(req, "size", getDisplayExecutionPageSize());
+
+    if (pageNum < 0) {
+      pageNum = 1;
+    }
+    List<ExecutableFlow> history = null;
+    Integer totalCount = null;
+    if (hasParam(req, "advfilter")) {
+      final String projContain = getParam(req, "projcontain");
+      final String flowContain = getParam(req, "flowcontain");
+      final String userContain = getParam(req, "usercontain");
+      final int status = getIntParam(req, "status");
+      final String begin = getParam(req, "begin");
+
+      final long beginTime =
+              "".equals(begin) ? -1 : DateTimeFormat.forPattern(FILTER_BY_DATE_PATTERN)
+                      .parseDateTime(begin).getMillis();
+      final String end = getParam(req, "end");
+
+      final long endTime =
+              "".equals(end) ? -1 : DateTimeFormat.forPattern(FILTER_BY_DATE_PATTERN)
+                      .parseDateTime(end).getMillis();
+      try {
+        history =
+                this.executorManagerAdapter.getExecutableFlows(projContain, flowContain,
+                        userContain, status, beginTime, endTime, (pageNum - 1)
+                                * pageSize, pageSize);
+        totalCount  =
+                this.executorManagerAdapter.getExecutableFlowsCount(projContain, flowContain,
+                        userContain, status, beginTime, endTime, (pageNum - 1)
+                                * pageSize, pageSize);
+      } catch (final ExecutorManagerException e) {
+        logger.error(e.getMessage());
+      }
+    } else if (hasParam(req, "search")) {
+      final String searchTerm = getParam(req, "searchterm");
+      try {
+        history =
+                this.executorManagerAdapter.getExecutableFlows(searchTerm, (pageNum - 1)
+                        * pageSize, pageSize);
+        totalCount =
+                this.executorManagerAdapter.getExecutableFlowsCount(searchTerm, (pageNum - 1)
+                        * pageSize, pageSize);
+      } catch (final ExecutorManagerException e) {
+        logger.error(e.getMessage());
+      }
+    } else {
+      try {
+        history =
+                this.executorManagerAdapter.getExecutableFlows((pageNum - 1) * pageSize,
+                        pageSize);
+        totalCount =
+                this.executorManagerAdapter.getExecutableFlowsCount((pageNum - 1) * pageSize,
+                pageSize);
+      } catch (final ExecutorManagerException e) {
+        e.printStackTrace();
+      }
+    }
+    List<Map<String,Object>> resultMap = new ArrayList<>();
+    for(ExecutableFlow flow : history){
+      Map<String,Object> map = new HashMap<>();
+      map.put("executionId",flow.getExecutionId());
+      map.put("flowId",flow.getFlowId());
+      map.put("ProjectName",flow.getProjectName());
+      map.put("startTime",flow.getStartTime());
+      map.put("endTime",flow.getEndTime());
+      map.put("status",flow.getStatus());
+      resultMap.add(map);
+    }
+    ret.put("totalCount",totalCount);
+    ret.put("flowHistory",resultMap);
+    ret.put("size", pageSize);
+    ret.put("page", pageNum);
+    // keep the search terms so that we can navigate to later pages
+    if (hasParam(req, "searchterm") && !getParam(req, "searchterm").equals("")) {
+      ret.put("search", "true");
+      ret.put("search_term", getParam(req, "searchterm"));
+    }
+
+    if (hasParam(req, "advfilter")) {
+      ret.put("advfilter", "true");
+      ret.put("projcontain", getParam(req, "projcontain"));
+      ret.put("flowcontain", getParam(req, "flowcontain"));
+      ret.put("usercontain", getParam(req, "usercontain"));
+      ret.put("status", getIntParam(req, "status"));
+      ret.put("begin", getParam(req, "begin"));
+      ret.put("end", getParam(req, "end"));
+
+    }
+   }
   }
 
   private void handleHistoryPage(final HttpServletRequest req,
@@ -197,6 +293,9 @@ public class HistoryServlet extends LoginAbstractAzkabanServlet {
   @Override
   protected void handlePost(final HttpServletRequest req, final HttpServletResponse resp,
       final Session session) throws ServletException, IOException {
+    if (hasParam(req, "ajax")) {
+      handleAJAXAction(req, resp, session);
+    }
   }
 
   public static class PageSelection {
