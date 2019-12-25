@@ -100,7 +100,7 @@ public class ExecutionFlowDao {
           throws ExecutorManagerException {
     try {
       return this.dbOperator.query(FetchExecutableFlowsCount.FETCH_ALL_EXECUTABLE_FLOW_HISTORY,
-              new FetchExecutableFlowsCount(), skip, num);
+              new FetchExecutableFlowsCount());
     } catch (final SQLException e) {
       throw new ExecutorManagerException("Error fetching flow History", e);
     }
@@ -121,7 +121,7 @@ public class ExecutionFlowDao {
           throws ExecutorManagerException {
     try {
       return this.dbOperator.query(FetchExecutableFlowsCount.FETCH_EXECUTABLE_FLOW_HISTORY,
-              new FetchExecutableFlowsCount(), projectId, flowId, skip, num);
+              new FetchExecutableFlowsCount(), projectId, flowId);
     } catch (final SQLException e) {
       throw new ExecutorManagerException("Error fetching flow history", e);
     }
@@ -168,7 +168,7 @@ public class ExecutionFlowDao {
           throws ExecutorManagerException {
     try {
       return this.dbOperator.query(FetchExecutableFlowsCount.FETCH_EXECUTABLE_FLOW_BY_STATUS,
-              new FetchExecutableFlowsCount(), projectId, flowId, status.getNumVal(), skip, num);
+              new FetchExecutableFlowsCount(), projectId, flowId, status.getNumVal());
     } catch (final SQLException e) {
       throw new ExecutorManagerException("Error fetching active flows", e);
     }
@@ -543,16 +543,16 @@ public class ExecutionFlowDao {
                     + "WHERE exec_id=?";
     static String FETCH_ALL_EXECUTABLE_FLOW_HISTORY =
             "SELECT count(1) FROM execution_flows "
-                    + "ORDER BY exec_id DESC LIMIT ?, ?";
+                    + "ORDER BY exec_id DESC ";
     static String FETCH_EXECUTABLE_FLOW_HISTORY =
             "SELECT count(1) FROM execution_flows "
                     + "WHERE project_id=? AND flow_id=? "
-                    + "ORDER BY exec_id DESC LIMIT ?, ?";
+                    + "ORDER BY exec_id DESC ";
     static String FETCH_EXECUTABLE_FLOW_BY_STATUS =
             "SELECT count(1) FROM execution_flows "
                     + "WHERE project_id=? AND flow_id=? AND status=? "
 
-                    + "ORDER BY exec_id DESC LIMIT ?, ?";
+                    + "ORDER BY exec_id DESC ";
 
     @Override
     public Integer handle(final ResultSet rs) throws SQLException {
