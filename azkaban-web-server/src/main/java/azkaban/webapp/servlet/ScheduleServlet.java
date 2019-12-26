@@ -155,7 +155,8 @@ public class ScheduleServlet extends LoginAbstractAzkabanServlet {
     data.put(PARAM_SCHEDULE_ID, schedule.getScheduleId());
     data.put("flowname", schedule.getFlowName());
     data.put("projectname", schedule.getProjectName());
-    data.put("time", schedule.getFirstSchedTime());
+    data.put("firstSchedTime", schedule.getFirstSchedTime());
+    data.put("nextExectime", schedule.getNextExecTime());
     data.put("cron", schedule.getCronExpression());
 
     final DateTime time = DateTime.now();
